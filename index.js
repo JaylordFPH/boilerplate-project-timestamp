@@ -21,24 +21,35 @@ app.get("/", function (req, res) {
 
 // your first API endpoint... 
 app.get("/api/:date?", function (req, res) {
-  let {date} = req.params.date
+ let dateInput = req.params.date;
 
-  if (!date) {
-    const now = new Date();
-    return res.json({ unix: now.getTime(), utc: now.toUTCString() });
+  try {
+    let date;
+
+    if (!dateInput) {
+      date = new Date();
+    } else {
+      const isTimestamp = /^\d+$/.test(dateInput);
+      
+      if (isTimestamp) {
+        const timestamp = parseInt(dateInput);
+        date = dateInput.length === 10 ? new Date(timestamp * 1000) : new Date(timestamp);
+      } else {
+        date = new Date(dateInput);
+      }
+    }
+
+    if (isNaN(date.getTime())) {
+      return res.json({ error: "Invalid Date" });
+    }
+
+    res.json({ unix: date.getTime(), utc: date.toUTCString() });
+
+  } catch (err) {
+    res.json({ error: "Invalid Date" });
+    console.log(err);
   }
-
-  if (!isNaN(date)) {
-    date = parseInt(date);
-  }
-
-  const parsedDate = new Date(date);
-
-  if (parsedDate.toString() === 'Invalid Date') {
-    return res.json({ error: 'Invalid Date' });
-  }
-
-  res.json({ unix: parsedDate.getTime(), utc: parsedDate.toUTCString() });
+  
 });
 
 
